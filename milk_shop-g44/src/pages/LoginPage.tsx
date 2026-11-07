@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import { login } from "../services/authService";
+import { loginSuccess, selectCurrentUser } from "../redux/authSlice";
 import { validateLogin } from "../utils/validators";
 import type { FieldErrors, LoginValues } from "../utils/validators";
 import "./AuthPage.css";
@@ -9,9 +12,13 @@ interface LocationState {
     registeredEmail?: string;
     from?: string;
 }
+
 export default function LoginPage() {
+    const dispatch = useDispatch();
     const location = useLocation();
+    const currentUser = useSelector(selectCurrentUser);
     const state = (location.state ?? {}) as LocationState;
+
     const [values, setValues] = useState<LoginValues>({
         email: state.registeredEmail ?? "",
         password: "",
@@ -19,34 +26,56 @@ export default function LoginPage() {
     const [errors, setErrors] = useState<FieldErrors<LoginValues>>({});
     const [serverError, setServerError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    if (currentUser) {
+        return <Navigate to={state.from ?? "/"} replace />;
+    }
+
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
         const { name, value } = e.target;
         setValues((prev) => ({ ...prev, [name]: value }));
         setErrors((prev) => ({ ...prev, [name]: undefined }));
         setServerError("");
     }
-    function handleSubmit(e: FormEvent<HTMLFormElement>) {
+
+    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
+
         const found = validateLogin(values);
         setErrors(found);
         if (Object.keys(found).length > 0) return;
-        console.log("Đăng nhập:", values.email);
+
+        setLoading(true);
+        try {
+            const user = await login(values.email, values.password);
+            dispatch(loginSuccess(user));
+        } catch (err) {
+            setServerError(
+                err instanceof Error ? err.message : "Đăng nhập thất bại"
+            );
+            setLoading(false);
+        }
     }
+
     return (
         <div className="auth-page">
             <div className="auth-card">
                 <h1>Đăng nhập</h1>
                 <p className="auth-subtitle">Chào mừng bạn quay lại cửa hàng sữa</p>
+
                 {state.registeredEmail && (
                     <div className="alert alert-success py-2" role="alert">
                         Đăng ký thành công! Hãy đăng nhập để tiếp tục.
                     </div>
                 )}
+
                 {serverError && (
                     <div className="alert alert-danger py-2" role="alert">
                         {serverError}
                     </div>
                 )}
+
                 <form onSubmit={handleSubmit} noValidate>
                     <div className="mb-3">
                         <label htmlFor="login-email" className="form-label">
@@ -66,6 +95,7 @@ export default function LoginPage() {
                             <div className="invalid-feedback">{errors.email}</div>
                         )}
                     </div>
+
                     <div className="mb-4">
                         <label htmlFor="login-password" className="form-label">
                             Mật khẩu
@@ -97,8 +127,12 @@ export default function LoginPage() {
                         )}
                     </div>
 
-                    <button type="submit" className="btn btn-primary w-100">
-                        Đăng nhập
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-100"
+                        disabled={loading}
+                    >
+                        {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                     </button>
                 </form>
 
