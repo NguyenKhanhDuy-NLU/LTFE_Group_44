@@ -8,9 +8,15 @@ export interface User {
 
 export type PublicUser = Omit<User, "password">;
 
+export interface RegisterInput {
+    fullName: string;
+    email: string;
+    phone: string;
+    password: string;
+}
+
 const USERS_KEY = "milkshop_users";
 const SESSION_KEY = "milkshop_session";
-
 function delay(ms = 400): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -24,6 +30,10 @@ function readUsers(): User[] {
     }
 }
 
+function writeUsers(users: User[]): void {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
 function toPublicUser(user: User): PublicUser {
     return {
         id: user.id,
@@ -31,6 +41,28 @@ function toPublicUser(user: User): PublicUser {
         email: user.email,
         phone: user.phone,
     };
+}
+
+export async function register(input: RegisterInput): Promise<PublicUser> {
+    await delay();
+
+    const email = input.email.trim().toLowerCase();
+    const users = readUsers();
+
+    if (users.some((u) => u.email === email)) {
+        throw new Error("Email này đã được đăng ký");
+    }
+
+    const newUser: User = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        fullName: input.fullName.trim(),
+        email,
+        phone: input.phone.replace(/\s/g, ""),
+        password: input.password,
+    };
+
+    writeUsers([...users, newUser]);
+    return toPublicUser(newUser);
 }
 
 export async function login(

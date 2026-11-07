@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { register } from "../services/authService";
+import { selectCurrentUser } from "../redux/authSlice";
 import { validateRegister } from "../utils/validators";
 import type { FieldErrors, RegisterValues } from "../utils/validators";
 import "./AuthPage.css";
@@ -16,11 +19,17 @@ const EMPTY_FORM: RegisterValues = {
 
 export default function RegisterPage() {
     const navigate = useNavigate();
+    const currentUser = useSelector(selectCurrentUser);
 
     const [values, setValues] = useState<RegisterValues>(EMPTY_FORM);
     const [errors, setErrors] = useState<FieldErrors<RegisterValues>>({});
     const [serverError, setServerError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    if (currentUser) {
+        return <Navigate to="/" replace />;
+    }
 
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
         const { name, value, type, checked } = e.target;
@@ -32,16 +41,26 @@ export default function RegisterPage() {
         setServerError("");
     }
 
-    function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         const found = validateRegister(values);
         setErrors(found);
         if (Object.keys(found).length > 0) return;
 
-        navigate("/login", {
-            state: { registeredEmail: values.email.trim().toLowerCase() },
-        });
+        setLoading(true);
+        try {
+            const user = await register({
+                fullName: values.fullName,
+                email: values.email,
+                phone: values.phone,
+                password: values.password,
+            });
+            navigate("/login", { state: { registeredEmail: user.email } });
+        } catch (err) {
+            setServerError(err instanceof Error ? err.message : "Đăng ký thất bại");
+            setLoading(false);
+        }
     }
 
     return (
@@ -187,8 +206,12 @@ export default function RegisterPage() {
                         </div>
                     </div>
 
-                    <button type="submit" className="btn btn-primary w-100">
-                        Đăng ký
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-100"
+                        disabled={loading}
+                    >
+                        {loading ? "Đang tạo tài khoản..." : "Đăng ký"}
                     </button>
                 </form>
 
