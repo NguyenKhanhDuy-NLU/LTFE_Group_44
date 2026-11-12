@@ -1,24 +1,32 @@
 import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { getSession } from "../services/authService";
+import { getCart, saveCart } from "../services/orderService";
 import type { CartItem } from "../types/order";
 
-const initialItems: CartItem[] = [
-    { id: 1, name: "Sữa bột Dielac Alpha 900g", price: 250000, quantity: 1, image: "" },
-    { id: 2, name: "Sữa bột Similac 400g", price: 180000, quantity: 2, image: "" },
-];
-
 function Cart() {
-    const [items, setItems] = useState<CartItem[]>(initialItems);
+    const user = getSession();
+    const [items, setItems] = useState<CartItem[]>(user ? getCart(user.id) : []);
+
+    if (!user) {
+        return <Navigate to="/login" state={{ from: "/cart" }} replace />;
+    }
+
+    const update = (next: CartItem[]) => {
+        setItems(next);
+        saveCart(user.id, next);
+    };
 
     const changeQty = (id: number, delta: number) => {
-        setItems((prev) =>
-            prev.map((i) =>
+        update(
+            items.map((i) =>
                 i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i
             )
         );
     };
 
     const removeItem = (id: number) => {
-        setItems((prev) => prev.filter((i) => i.id !== id));
+        update(items.filter((i) => i.id !== id));
     };
 
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -28,7 +36,10 @@ function Cart() {
             <h2 className="mb-4">Giỏ hàng</h2>
 
             {items.length === 0 ? (
-                <p>Giỏ hàng trống.</p>
+                <div>
+                    <p>Giỏ hàng trống.</p>
+                    <Link to="/" className="btn btn-primary">Tiếp tục mua sắm</Link>
+                </div>
             ) : (
                 <>
                     <table className="table align-middle">
@@ -62,7 +73,7 @@ function Cart() {
 
                     <div className="text-end">
                         <h4>Tổng: {total.toLocaleString("vi-VN")}đ</h4>
-                        <button className="btn btn-primary">Tiến hành đặt hàng</button>
+                        <Link to="/checkout" className="btn btn-primary">Tiến hành đặt hàng</Link>
                     </div>
                 </>
             )}

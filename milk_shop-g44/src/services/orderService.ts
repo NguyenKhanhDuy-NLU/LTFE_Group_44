@@ -72,3 +72,14 @@ export function placeOrder(
     saveCart(userId, []);
     return order;
 }
+
+export function addToCart(userId: string, item: CartItem): void {
+    const cart = getCart(userId);
+    const exists = cart.some((i) => i.id === item.id);
+    const next = exists
+        ? cart.map((i) =>
+            i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+        )
+        : [...cart, item];
+    saveCart(userId, next);
+}
