@@ -6,6 +6,12 @@ export interface LoginValues {
 export interface ForgotPasswordValues {
     email: string;
 }
+export interface ResetPasswordValues {
+    email: string;
+    code: string;
+    password: string;
+    confirmPassword: string;
+}
 export interface RegisterValues {
     fullName: string;
     email: string;
@@ -52,6 +58,38 @@ export function validateForgotPassword(
         errors.email = "Vui lòng nhập email";
     } else if (!isValidEmail(values.email)) {
         errors.email = "Email không hợp lệ";
+    }
+
+    return errors;
+}
+
+export function validateResetPassword(
+    values: ResetPasswordValues
+): FieldErrors<ResetPasswordValues> {
+    const errors: FieldErrors<ResetPasswordValues> = {};
+
+    if (!values.email.trim()) {
+        errors.email = "Vui lòng nhập email";
+    } else if (!isValidEmail(values.email)) {
+        errors.email = "Email không hợp lệ";
+    }
+
+    if (!values.code.trim()) {
+        errors.code = "Vui lòng nhập mã xác nhận";
+    } else if (!/^\d{6}$/.test(values.code.trim())) {
+        errors.code = "Mã xác nhận gồm 6 chữ số";
+    }
+
+    if (!values.password) {
+        errors.password = "Vui lòng nhập mật khẩu mới";
+    } else if (!isStrongPassword(values.password)) {
+        errors.password = "Mật khẩu tối thiểu 6 ký tự, gồm cả chữ và số";
+    }
+
+    if (!values.confirmPassword) {
+        errors.confirmPassword = "Vui lòng nhập lại mật khẩu";
+    } else if (values.confirmPassword !== values.password) {
+        errors.confirmPassword = "Mật khẩu nhập lại không khớp";
     }
 
     return errors;

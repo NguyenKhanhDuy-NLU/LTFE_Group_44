@@ -10,6 +10,7 @@ import "./AuthPage.css";
 
 interface LocationState {
     registeredEmail?: string;
+    resetSuccess?: boolean;
     from?: string;
 }
 
@@ -67,6 +68,12 @@ export default function LoginPage() {
                 {state.registeredEmail && (
                     <div className="alert alert-success py-2" role="alert">
                         Đăng ký thành công! Hãy đăng nhập để tiếp tục.
+                    </div>
+                )}
+
+                {state.resetSuccess && (
+                    <div className="alert alert-success py-2" role="alert">
+                        Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.
                     </div>
                 )}
 

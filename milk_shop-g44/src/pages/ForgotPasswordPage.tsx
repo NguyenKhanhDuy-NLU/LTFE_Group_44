@@ -1,29 +1,50 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { requestPasswordReset } from "../services/authService";
 import { validateForgotPassword } from "../utils/validators";
 import type { FieldErrors, ForgotPasswordValues } from "../utils/validators";
 import "./AuthPage.css";
 
 export default function ForgotPasswordPage() {
+    const navigate = useNavigate();
+
     const [values, setValues] = useState<ForgotPasswordValues>({ email: "" });
     const [errors, setErrors] = useState<FieldErrors<ForgotPasswordValues>>({});
+    const [serverError, setServerError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [sentCode, setSentCode] = useState("");
 
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
         const { name, value } = e.target;
         setValues((prev) => ({ ...prev, [name]: value }));
         setErrors((prev) => ({ ...prev, [name]: undefined }));
+        setServerError("");
+        setSentCode("");
     }
 
-    function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         const found = validateForgotPassword(values);
         setErrors(found);
         if (Object.keys(found).length > 0) return;
 
-        // Commit sau sẽ thay bằng gọi requestPasswordReset
-        console.log("Forgot password:", values.email);
+        setLoading(true);
+        try {
+            const code = await requestPasswordReset(values.email);
+            setSentCode(code);
+        } catch (err) {
+            setServerError(
+                err instanceof Error ? err.message : "Không thể gửi mã xác nhận"
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function goToReset() {
+        navigate("/reset-password", { state: { email: values.email.trim() } });
     }
 
     return (
@@ -33,6 +54,20 @@ export default function ForgotPasswordPage() {
                 <p className="auth-subtitle">
                     Nhập email đã đăng ký, chúng tôi sẽ gửi mã xác nhận để đặt lại mật khẩu
                 </p>
+
+                {serverError && (
+                    <div className="alert alert-danger py-2" role="alert">
+                        {serverError}
+                    </div>
+                )}
+
+                {sentCode && (
+                    <div className="auth-code-box">
+                        Mã xác nhận (demo, không có email thật):{" "}
+                        <strong>{sentCode}</strong>
+                        <div className="mt-1">Mã có hiệu lực trong 10 phút.</div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} noValidate>
                     <div className="mb-4">
@@ -54,9 +89,23 @@ export default function ForgotPasswordPage() {
                         )}
                     </div>
 
-                    <button type="submit" className="btn btn-primary w-100">
-                        Gửi mã xác nhận
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-100"
+                        disabled={loading}
+                    >
+                        {loading ? "Đang gửi..." : sentCode ? "Gửi lại mã" : "Gửi mã xác nhận"}
                     </button>
+
+                    {sentCode && (
+                        <button
+                            type="button"
+                            className="btn btn-outline-primary w-100 mt-2"
+                            onClick={goToReset}
+                        >
+                            Tiếp tục đặt lại mật khẩu
+                        </button>
+                    )}
                 </form>
 
                 <p className="auth-footer-text">
