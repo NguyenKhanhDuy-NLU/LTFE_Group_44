@@ -125,6 +125,11 @@ export default function LoginPage() {
                         {errors.password && (
                             <div className="invalid-feedback d-block">{errors.password}</div>
                         )}
+                        <div className="text-end mt-2">
+                            <Link to="/forgot-password" className="auth-link-small">
+                                Quên mật khẩu?
+                            </Link>
+                        </div>
                     </div>
 
                     <button

@@ -38,3 +38,20 @@
     font-size: 15px;
     color: var(--shop-muted, #4a5a6a);
 }
+.auth-link-small {
+    font-size: 14px;
+}
+.auth-code-box {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    background: var(--shop-pastel-soft, #f1f7fc);
+    border: 1px dashed var(--shop-line, #dceaf6);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--shop-ink, #1f2a37);
+}
+.auth-code-box strong {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: var(--shop-navy, #0f3d6b);
+}

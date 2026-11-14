@@ -3,6 +3,9 @@ export interface LoginValues {
     email: string;
     password: string;
 }
+export interface ForgotPasswordValues {
+    email: string;
+}
 export interface RegisterValues {
     fullName: string;
     email: string;
@@ -35,6 +38,20 @@ export function validateLogin(values: LoginValues): FieldErrors<LoginValues> {
 
     if (!values.password) {
         errors.password = "Vui lòng nhập mật khẩu";
+    }
+
+    return errors;
+}
+
+export function validateForgotPassword(
+    values: ForgotPasswordValues
+): FieldErrors<ForgotPasswordValues> {
+    const errors: FieldErrors<ForgotPasswordValues> = {};
+
+    if (!values.email.trim()) {
+        errors.email = "Vui lòng nhập email";
+    } else if (!isValidEmail(values.email)) {
+        errors.email = "Email không hợp lệ";
     }
 
     return errors;
