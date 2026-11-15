@@ -10,6 +10,7 @@ import "./AuthPage.css";
 
 interface LocationState {
     registeredEmail?: string;
+    resetSuccess?: boolean;
     from?: string;
 }
 
@@ -70,6 +71,12 @@ export default function LoginPage() {
                     </div>
                 )}
 
+                {state.resetSuccess && (
+                    <div className="alert alert-success py-2" role="alert">
+                        Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.
+                    </div>
+                )}
+
                 {serverError && (
                     <div className="alert alert-danger py-2" role="alert">
                         {serverError}
@@ -125,6 +132,11 @@ export default function LoginPage() {
                         {errors.password && (
                             <div className="invalid-feedback d-block">{errors.password}</div>
                         )}
+                        <div className="text-end mt-2">
+                            <Link to="/forgot-password" className="auth-link-small">
+                                Quên mật khẩu?
+                            </Link>
+                        </div>
                     </div>
 
                     <button

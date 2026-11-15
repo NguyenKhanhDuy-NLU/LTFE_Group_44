@@ -17,6 +17,15 @@ export interface RegisterInput {
 
 const USERS_KEY = "milkshop_users";
 const SESSION_KEY = "milkshop_session";
+const RESET_KEY = "milkshop_reset_codes";
+const RESET_TTL_MS = 10 * 60 * 1000;
+
+interface ResetRecord {
+    email: string;
+    code: string;
+    expiresAt: number;
+}
+
 function delay(ms = 400): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -94,4 +103,61 @@ export function getSession(): PublicUser | null {
 
 export function logout(): void {
     localStorage.removeItem(SESSION_KEY);
+}
+
+function readResets(): ResetRecord[] {
+    try {
+        const raw = localStorage.getItem(RESET_KEY);
+        return raw ? (JSON.parse(raw) as ResetRecord[]) : [];
+    } catch {
+        return [];
+    }
+}
+
+function writeResets(records: ResetRecord[]): void {
+    localStorage.setItem(RESET_KEY, JSON.stringify(records));
+}
+
+// Không có server gửi email nên hàm trả về mã để giao diện hiển thị (chỉ để demo).
+export async function requestPasswordReset(emailInput: string): Promise<string> {
+    await delay();
+
+    const email = emailInput.trim().toLowerCase();
+    if (!readUsers().some((u) => u.email === email)) {
+        throw new Error("Email này chưa được đăng ký");
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const others = readResets().filter((r) => r.email !== email);
+    writeResets([...others, { email, code, expiresAt: Date.now() + RESET_TTL_MS }]);
+    return code;
+}
+
+export async function resetPassword(
+    emailInput: string,
+    code: string,
+    newPassword: string
+): Promise<void> {
+    await delay();
+
+    const email = emailInput.trim().toLowerCase();
+    const record = readResets().find((r) => r.email === email);
+
+    if (!record || record.code !== code.trim()) {
+        throw new Error("Mã xác nhận không đúng");
+    }
+    if (record.expiresAt < Date.now()) {
+        writeResets(readResets().filter((r) => r.email !== email));
+        throw new Error("Mã xác nhận đã hết hạn, vui lòng gửi lại");
+    }
+
+    const users = readUsers();
+    if (!users.some((u) => u.email === email)) {
+        throw new Error("Email này chưa được đăng ký");
+    }
+
+    writeUsers(
+        users.map((u) => (u.email === email ? { ...u, password: newPassword } : u))
+    );
+    writeResets(readResets().filter((r) => r.email !== email));
 }
