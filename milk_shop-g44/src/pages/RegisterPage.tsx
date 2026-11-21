@@ -1,9 +1,8 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { useSelector } from "react-redux";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
-import { selectCurrentUser } from "../redux/authSlice";
+import { useAppSelector } from "../redux/hooks";
 import { validateRegister } from "../utils/validators";
 import type { FieldErrors, RegisterValues } from "../utils/validators";
 import "./AuthPage.css";
@@ -19,7 +18,7 @@ const EMPTY_FORM: RegisterValues = {
 
 export default function RegisterPage() {
     const navigate = useNavigate();
-    const currentUser = useSelector(selectCurrentUser);
+    const currentUser = useAppSelector((state) => state.auth.user);
 
     const [values, setValues] = useState<RegisterValues>(EMPTY_FORM);
     const [errors, setErrors] = useState<FieldErrors<RegisterValues>>({});
@@ -66,6 +65,9 @@ export default function RegisterPage() {
     return (
         <div className="auth-page">
             <div className="auth-card">
+                <div className="auth-icon" aria-hidden="true">
+                    <i className="bi bi-person-plus"></i>
+                </div>
                 <h1>Đăng ký</h1>
                 <p className="auth-subtitle">Tạo tài khoản để mua sữa nhanh hơn</p>
 
@@ -90,9 +92,7 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             placeholder="Nguyễn Văn A"
                         />
-                        {errors.fullName && (
-                            <div className="invalid-feedback">{errors.fullName}</div>
-                        )}
+                        {errors.fullName && <div className="invalid-feedback">{errors.fullName}</div>}
                     </div>
 
                     <div className="mb-3">
@@ -109,9 +109,7 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             placeholder="ban@example.com"
                         />
-                        {errors.email && (
-                            <div className="invalid-feedback">{errors.email}</div>
-                        )}
+                        {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                     </div>
 
                     <div className="mb-3">
@@ -128,9 +126,7 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             placeholder="0912345678"
                         />
-                        {errors.phone && (
-                            <div className="invalid-feedback">{errors.phone}</div>
-                        )}
+                        {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
                     </div>
 
                     <div className="mb-3">
@@ -143,9 +139,7 @@ export default function RegisterPage() {
                                 name="password"
                                 type={showPassword ? "text" : "password"}
                                 autoComplete="new-password"
-                                className={
-                                    "form-control" + (errors.password ? " is-invalid" : "")
-                                }
+                                className={"form-control" + (errors.password ? " is-invalid" : "")}
                                 value={values.password}
                                 onChange={handleChange}
                                 placeholder="Tối thiểu 6 ký tự, có chữ và số"
@@ -159,9 +153,7 @@ export default function RegisterPage() {
                                 <i className={"bi " + (showPassword ? "bi-eye-slash" : "bi-eye")}></i>
                             </button>
                         </div>
-                        {errors.password && (
-                            <div className="invalid-feedback d-block">{errors.password}</div>
-                        )}
+                        {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
                     </div>
 
                     <div className="mb-3">
@@ -173,9 +165,7 @@ export default function RegisterPage() {
                             name="confirmPassword"
                             type={showPassword ? "text" : "password"}
                             autoComplete="new-password"
-                            className={
-                                "form-control" + (errors.confirmPassword ? " is-invalid" : "")
-                            }
+                            className={"form-control" + (errors.confirmPassword ? " is-invalid" : "")}
                             value={values.confirmPassword}
                             onChange={handleChange}
                             placeholder="Nhập lại mật khẩu"
@@ -191,26 +181,18 @@ export default function RegisterPage() {
                                 id="reg-agree"
                                 name="agree"
                                 type="checkbox"
-                                className={
-                                    "form-check-input" + (errors.agree ? " is-invalid" : "")
-                                }
+                                className={"form-check-input" + (errors.agree ? " is-invalid" : "")}
                                 checked={values.agree}
                                 onChange={handleChange}
                             />
                             <label htmlFor="reg-agree" className="form-check-label">
                                 Tôi đồng ý với điều khoản sử dụng
                             </label>
-                            {errors.agree && (
-                                <div className="invalid-feedback">{errors.agree}</div>
-                            )}
+                            {errors.agree && <div className="invalid-feedback">{errors.agree}</div>}
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary w-100"
-                        disabled={loading}
-                    >
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                         {loading ? "Đang tạo tài khoản..." : "Đăng ký"}
                     </button>
                 </form>

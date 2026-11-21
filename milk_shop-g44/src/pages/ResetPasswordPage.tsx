@@ -48,9 +48,7 @@ export default function ResetPasswordPage() {
                 replace: true,
             });
         } catch (err) {
-            setServerError(
-                err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại"
-            );
+            setServerError(err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại");
             setLoading(false);
         }
     }
@@ -58,10 +56,11 @@ export default function ResetPasswordPage() {
     return (
         <div className="auth-page">
             <div className="auth-card">
+                <div className="auth-icon" aria-hidden="true">
+                    <i className="bi bi-shield-lock"></i>
+                </div>
                 <h1>Đặt lại mật khẩu</h1>
-                <p className="auth-subtitle">
-                    Nhập mã xác nhận và mật khẩu mới của bạn
-                </p>
+                <p className="auth-subtitle">Nhập mã xác nhận và mật khẩu mới của bạn</p>
 
                 {serverError && (
                     <div className="alert alert-danger py-2" role="alert">
@@ -84,9 +83,7 @@ export default function ResetPasswordPage() {
                             onChange={handleChange}
                             placeholder="ban@example.com"
                         />
-                        {errors.email && (
-                            <div className="invalid-feedback">{errors.email}</div>
-                        )}
+                        {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                     </div>
 
                     <div className="mb-3">
@@ -105,9 +102,7 @@ export default function ResetPasswordPage() {
                             onChange={handleChange}
                             placeholder="6 chữ số"
                         />
-                        {errors.code && (
-                            <div className="invalid-feedback">{errors.code}</div>
-                        )}
+                        {errors.code && <div className="invalid-feedback">{errors.code}</div>}
                     </div>
 
                     <div className="mb-3">
@@ -120,9 +115,7 @@ export default function ResetPasswordPage() {
                                 name="password"
                                 type={showPassword ? "text" : "password"}
                                 autoComplete="new-password"
-                                className={
-                                    "form-control" + (errors.password ? " is-invalid" : "")
-                                }
+                                className={"form-control" + (errors.password ? " is-invalid" : "")}
                                 value={values.password}
                                 onChange={handleChange}
                                 placeholder="Tối thiểu 6 ký tự, gồm chữ và số"
@@ -136,9 +129,7 @@ export default function ResetPasswordPage() {
                                 <i className={"bi " + (showPassword ? "bi-eye-slash" : "bi-eye")}></i>
                             </button>
                         </div>
-                        {errors.password && (
-                            <div className="invalid-feedback d-block">{errors.password}</div>
-                        )}
+                        {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
                     </div>
 
                     <div className="mb-4">
@@ -150,9 +141,7 @@ export default function ResetPasswordPage() {
                             name="confirmPassword"
                             type={showPassword ? "text" : "password"}
                             autoComplete="new-password"
-                            className={
-                                "form-control" + (errors.confirmPassword ? " is-invalid" : "")
-                            }
+                            className={"form-control" + (errors.confirmPassword ? " is-invalid" : "")}
                             value={values.confirmPassword}
                             onChange={handleChange}
                             placeholder="Nhập lại mật khẩu mới"
@@ -162,11 +151,7 @@ export default function ResetPasswordPage() {
                         )}
                     </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary w-100"
-                        disabled={loading}
-                    >
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                         {loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}
                     </button>
                 </form>

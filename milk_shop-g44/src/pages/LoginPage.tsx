@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { login } from "../services/authService";
-import { loginSuccess, selectCurrentUser } from "../redux/authSlice";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { loginSuccess } from "../redux/authSlice";
 import { validateLogin } from "../utils/validators";
 import type { FieldErrors, LoginValues } from "../utils/validators";
 import "./AuthPage.css";
@@ -15,9 +15,9 @@ interface LocationState {
 }
 
 export default function LoginPage() {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const location = useLocation();
-    const currentUser = useSelector(selectCurrentUser);
+    const currentUser = useAppSelector((state) => state.auth.user);
     const state = (location.state ?? {}) as LocationState;
 
     const [values, setValues] = useState<LoginValues>({
@@ -52,9 +52,7 @@ export default function LoginPage() {
             const user = await login(values.email, values.password);
             dispatch(loginSuccess(user));
         } catch (err) {
-            setServerError(
-                err instanceof Error ? err.message : "Đăng nhập thất bại"
-            );
+            setServerError(err instanceof Error ? err.message : "Đăng nhập thất bại");
             setLoading(false);
         }
     }
@@ -62,6 +60,9 @@ export default function LoginPage() {
     return (
         <div className="auth-page">
             <div className="auth-card">
+                <div className="auth-icon" aria-hidden="true">
+                    <i className="bi bi-box-arrow-in-right"></i>
+                </div>
                 <h1>Đăng nhập</h1>
                 <p className="auth-subtitle">Chào mừng bạn quay lại cửa hàng sữa</p>
 
@@ -98,9 +99,7 @@ export default function LoginPage() {
                             onChange={handleChange}
                             placeholder="ban@example.com"
                         />
-                        {errors.email && (
-                            <div className="invalid-feedback">{errors.email}</div>
-                        )}
+                        {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                     </div>
 
                     <div className="mb-4">
@@ -113,9 +112,7 @@ export default function LoginPage() {
                                 name="password"
                                 type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
-                                className={
-                                    "form-control" + (errors.password ? " is-invalid" : "")
-                                }
+                                className={"form-control" + (errors.password ? " is-invalid" : "")}
                                 value={values.password}
                                 onChange={handleChange}
                                 placeholder="Nhập mật khẩu"
@@ -129,9 +126,7 @@ export default function LoginPage() {
                                 <i className={"bi " + (showPassword ? "bi-eye-slash" : "bi-eye")}></i>
                             </button>
                         </div>
-                        {errors.password && (
-                            <div className="invalid-feedback d-block">{errors.password}</div>
-                        )}
+                        {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
                         <div className="text-end mt-2">
                             <Link to="/forgot-password" className="auth-link-small">
                                 Quên mật khẩu?
@@ -139,11 +134,7 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary w-100"
-                        disabled={loading}
-                    >
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                         {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                     </button>
                 </form>

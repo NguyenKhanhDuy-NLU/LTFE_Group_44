@@ -1,97 +1,81 @@
-export interface User {
-    id: string;
-    fullName: string;
-    email: string;
-    phone: string;
-    password: string;
-}
-
-export type PublicUser = Omit<User, "password">;
-
-export interface RegisterInput {
-    fullName: string;
-    email: string;
-    phone: string;
-    password: string;
-}
-
-const USERS_KEY = "milkshop_users";
+import type { PasswordReset, PublicUser, RegisterInput, User } from "../types";
+const API_URL = "http://localhost:3001";
 const SESSION_KEY = "milkshop_session";
-const RESET_KEY = "milkshop_reset_codes";
 const RESET_TTL_MS = 10 * 60 * 1000;
-
-interface ResetRecord {
-    email: string;
-    code: string;
-    expiresAt: number;
+const SERVER_ERROR = "Không kết nối được JSON Server, hãy kiểm tra (npm run api)";
+function normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
 }
-
-function delay(ms = 400): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function readUsers(): User[] {
-    try {
-        const raw = localStorage.getItem(USERS_KEY);
-        return raw ? (JSON.parse(raw) as User[]) : [];
-    } catch {
-        return [];
-    }
-}
-
-function writeUsers(users: User[]): void {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
 function toPublicUser(user: User): PublicUser {
     return {
-        id: user.id,
+        id: String(user.id),
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
+        createdAt: user.createdAt,
     };
 }
-
+async function request(path: string, init?: RequestInit): Promise<Response> {
+    try {
+        return await fetch(API_URL + path, init);
+    } catch {
+        throw new Error(SERVER_ERROR);
+    }
+}
+function createUserId(): string {
+    return "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+async function findUserByEmail(email: string): Promise<User | undefined> {
+    const response = await request("/users?email=" + encodeURIComponent(email));
+    if (!response.ok) {
+        throw new Error(SERVER_ERROR);
+    }
+    const users: User[] = await response.json();
+    return users.find((user) => user.email === email);
+}
+async function findResets(email: string): Promise<PasswordReset[]> {
+    const response = await request("/passwordResets?email=" + encodeURIComponent(email));
+    if (!response.ok) {
+        throw new Error(SERVER_ERROR);
+    }
+    const records: PasswordReset[] = await response.json();
+    return records.filter((record) => record.email === email);
+}
+async function deleteResets(records: PasswordReset[]): Promise<void> {
+    await Promise.all(records.map((record) => request("/passwordResets/" + record.id, { method: "DELETE" })));
+}
 export async function register(input: RegisterInput): Promise<PublicUser> {
-    await delay();
-
-    const email = input.email.trim().toLowerCase();
-    const users = readUsers();
-
-    if (users.some((u) => u.email === email)) {
+    const email = normalizeEmail(input.email);
+    if (await findUserByEmail(email)) {
         throw new Error("Email này đã được đăng ký");
     }
-
-    const newUser: User = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        fullName: input.fullName.trim(),
-        email,
-        phone: input.phone.replace(/\s/g, ""),
-        password: input.password,
-    };
-
-    writeUsers([...users, newUser]);
-    return toPublicUser(newUser);
+    const response = await request("/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: createUserId(), // id dạng chuỗi riêng, không trùng userId của các đánh giá có sẵn
+            fullName: input.fullName.trim(),
+            email: email,
+            phone: input.phone.replace(/\s/g, ""),
+            password: input.password,
+            createdAt: new Date().toISOString(),
+        }),
+    });
+    if (!response.ok) {
+        throw new Error("Không thể lưu tài khoản, hãy kiểm tra JSON Server (npm run api)");
+    }
+    const created: User = await response.json();
+    return toPublicUser(created);
 }
-
-export async function login(
-    emailInput: string,
-    password: string
-): Promise<PublicUser> {
-    await delay();
-
-    const email = emailInput.trim().toLowerCase();
-    const user = readUsers().find((u) => u.email === email);
-
+export async function login(emailInput: string, password: string): Promise<PublicUser> {
+    const user = await findUserByEmail(normalizeEmail(emailInput));
     if (!user || user.password !== password) {
         throw new Error("Email hoặc mật khẩu không đúng");
     }
-
     const publicUser = toPublicUser(user);
     localStorage.setItem(SESSION_KEY, JSON.stringify(publicUser));
     return publicUser;
 }
-
 export function getSession(): PublicUser | null {
     try {
         const raw = localStorage.getItem(SESSION_KEY);
@@ -100,64 +84,48 @@ export function getSession(): PublicUser | null {
         return null;
     }
 }
-
 export function logout(): void {
     localStorage.removeItem(SESSION_KEY);
 }
-
-function readResets(): ResetRecord[] {
-    try {
-        const raw = localStorage.getItem(RESET_KEY);
-        return raw ? (JSON.parse(raw) as ResetRecord[]) : [];
-    } catch {
-        return [];
-    }
-}
-
-function writeResets(records: ResetRecord[]): void {
-    localStorage.setItem(RESET_KEY, JSON.stringify(records));
-}
-
-// Không có server gửi email nên hàm trả về mã để giao diện hiển thị (chỉ để demo).
 export async function requestPasswordReset(emailInput: string): Promise<string> {
-    await delay();
-
-    const email = emailInput.trim().toLowerCase();
-    if (!readUsers().some((u) => u.email === email)) {
+    const email = normalizeEmail(emailInput);
+    if (!(await findUserByEmail(email))) {
         throw new Error("Email này chưa được đăng ký");
     }
-
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const others = readResets().filter((r) => r.email !== email);
-    writeResets([...others, { email, code, expiresAt: Date.now() + RESET_TTL_MS }]);
+    await deleteResets(await findResets(email)); // mỗi email chỉ giữ 1 mã mới nhất
+    const response = await request("/passwordResets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, code: code, expiresAt: Date.now() + RESET_TTL_MS }),
+    });
+    if (!response.ok) {
+        throw new Error("Không thể tạo mã xác nhận, hãy kiểm tra JSON Server (npm run api)");
+    }
     return code;
 }
-
-export async function resetPassword(
-    emailInput: string,
-    code: string,
-    newPassword: string
-): Promise<void> {
-    await delay();
-
-    const email = emailInput.trim().toLowerCase();
-    const record = readResets().find((r) => r.email === email);
-
+export async function resetPassword(emailInput: string, code: string, newPassword: string): Promise<void> {
+    const email = normalizeEmail(emailInput);
+    const records = await findResets(email);
+    const record = records[records.length - 1];
     if (!record || record.code !== code.trim()) {
         throw new Error("Mã xác nhận không đúng");
     }
     if (record.expiresAt < Date.now()) {
-        writeResets(readResets().filter((r) => r.email !== email));
+        await deleteResets(records);
         throw new Error("Mã xác nhận đã hết hạn, vui lòng gửi lại");
     }
-
-    const users = readUsers();
-    if (!users.some((u) => u.email === email)) {
+    const user = await findUserByEmail(email);
+    if (!user) {
         throw new Error("Email này chưa được đăng ký");
     }
-
-    writeUsers(
-        users.map((u) => (u.email === email ? { ...u, password: newPassword } : u))
-    );
-    writeResets(readResets().filter((r) => r.email !== email));
+    const response = await request("/users/" + user.id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+    });
+    if (!response.ok) {
+        throw new Error("Không thể cập nhật mật khẩu, hãy kiểm tra JSON Server (npm run api)");
+    }
+    await deleteResets(records);
 }

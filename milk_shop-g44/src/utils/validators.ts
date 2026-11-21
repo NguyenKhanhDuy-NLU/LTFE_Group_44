@@ -50,7 +50,7 @@ export function validateLogin(values: LoginValues): FieldErrors<LoginValues> {
 }
 
 export function validateForgotPassword(
-    values: ForgotPasswordValues
+    values: ForgotPasswordValues,
 ): FieldErrors<ForgotPasswordValues> {
     const errors: FieldErrors<ForgotPasswordValues> = {};
 
@@ -64,7 +64,7 @@ export function validateForgotPassword(
 }
 
 export function validateResetPassword(
-    values: ResetPasswordValues
+    values: ResetPasswordValues,
 ): FieldErrors<ResetPasswordValues> {
     const errors: FieldErrors<ResetPasswordValues> = {};
 
@@ -95,9 +95,7 @@ export function validateResetPassword(
     return errors;
 }
 
-export function validateRegister(
-    values: RegisterValues
-): FieldErrors<RegisterValues> {
+export function validateRegister(values: RegisterValues): FieldErrors<RegisterValues> {
     const errors: FieldErrors<RegisterValues> = {};
 
     if (values.fullName.trim().length < 2) {

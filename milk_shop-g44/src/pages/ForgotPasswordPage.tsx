@@ -35,9 +35,7 @@ export default function ForgotPasswordPage() {
             const code = await requestPasswordReset(values.email);
             setSentCode(code);
         } catch (err) {
-            setServerError(
-                err instanceof Error ? err.message : "Không thể gửi mã xác nhận"
-            );
+            setServerError(err instanceof Error ? err.message : "Không thể gửi mã xác nhận");
         } finally {
             setLoading(false);
         }
@@ -50,6 +48,9 @@ export default function ForgotPasswordPage() {
     return (
         <div className="auth-page">
             <div className="auth-card">
+                <div className="auth-icon" aria-hidden="true">
+                    <i className="bi bi-envelope-at"></i>
+                </div>
                 <h1>Quên mật khẩu</h1>
                 <p className="auth-subtitle">
                     Nhập email đã đăng ký, chúng tôi sẽ gửi mã xác nhận để đặt lại mật khẩu
@@ -63,8 +64,7 @@ export default function ForgotPasswordPage() {
 
                 {sentCode && (
                     <div className="auth-code-box">
-                        Mã xác nhận (demo, không có email thật):{" "}
-                        <strong>{sentCode}</strong>
+                        Mã xác nhận (demo, không có email thật): <strong>{sentCode}</strong>
                         <div className="mt-1">Mã có hiệu lực trong 10 phút.</div>
                     </div>
                 )}
@@ -84,16 +84,10 @@ export default function ForgotPasswordPage() {
                             onChange={handleChange}
                             placeholder="ban@example.com"
                         />
-                        {errors.email && (
-                            <div className="invalid-feedback">{errors.email}</div>
-                        )}
+                        {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                     </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary w-100"
-                        disabled={loading}
-                    >
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                         {loading ? "Đang gửi..." : sentCode ? "Gửi lại mã" : "Gửi mã xác nhận"}
                     </button>
 
