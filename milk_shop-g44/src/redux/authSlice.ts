@@ -1,16 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { getSession } from "../services/authService";
-import type { PublicUser } from "../services/authService";
-
-export interface AuthState {
-    user: PublicUser | null;
-}
-
+import type { AuthState, PublicUser } from "../types";
 const initialState: AuthState = {
     user: getSession(),
 };
-
 const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -23,10 +17,5 @@ const authSlice = createSlice({
         },
     },
 });
-
 export const { loginSuccess, logoutSuccess } = authSlice.actions;
-
-export const selectCurrentUser = (state: { auth: AuthState }) =>
-    state.auth.user;
-
 export default authSlice.reducer;
