@@ -12,6 +12,15 @@ export interface ResetPasswordValues {
     password: string;
     confirmPassword: string;
 }
+export interface ProfileValues {
+    fullName: string;
+    phone: string;
+}
+export interface ChangePasswordValues {
+    currentPassword: string;
+    password: string;
+    confirmPassword: string;
+}
 export interface RegisterValues {
     fullName: string;
     email: string;
@@ -130,5 +139,38 @@ export function validateRegister(values: RegisterValues): FieldErrors<RegisterVa
         errors.agree = "Bạn cần đồng ý với điều khoản sử dụng";
     }
 
+    return errors;
+}
+
+export function validateProfile(values: ProfileValues): FieldErrors<ProfileValues> {
+    const errors: FieldErrors<ProfileValues> = {};
+    if (values.fullName.trim().length < 2) {
+        errors.fullName = "Họ tên phải có ít nhất 2 ký tự";
+    }
+    if (!values.phone.trim()) {
+        errors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!isValidPhone(values.phone)) {
+        errors.phone = "Số điện thoại không hợp lệ (VD: 0912345678)";
+    }
+    return errors;
+}
+
+export function validateChangePassword(values: ChangePasswordValues): FieldErrors<ChangePasswordValues> {
+    const errors: FieldErrors<ChangePasswordValues> = {};
+    if (!values.currentPassword) {
+        errors.currentPassword = "Vui lòng nhập mật khẩu hiện tại";
+    }
+    if (!values.password) {
+        errors.password = "Vui lòng nhập mật khẩu mới";
+    } else if (!isStrongPassword(values.password)) {
+        errors.password = "Mật khẩu tối thiểu 6 ký tự, gồm cả chữ và số";
+    } else if (values.password === values.currentPassword) {
+        errors.password = "Mật khẩu mới phải khác mật khẩu hiện tại";
+    }
+    if (!values.confirmPassword) {
+        errors.confirmPassword = "Vui lòng nhập lại mật khẩu";
+    } else if (values.confirmPassword !== values.password) {
+        errors.confirmPassword = "Mật khẩu nhập lại không khớp";
+    }
     return errors;
 }
