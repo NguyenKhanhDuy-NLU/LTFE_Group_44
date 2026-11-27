@@ -1,53 +1,55 @@
-import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { logoutSuccess } from "../../redux/authSlice";
 import { logout } from "../../services/authService";
-import { logoutSuccess, selectCurrentUser } from "../../redux/authSlice";
-
+import { getInitial } from "../../utils/reviewUtils";
+import "../../pages/AuthPage.css";
 export default function UserMenu() {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const user = useSelector(selectCurrentUser);
-
+    const user = useAppSelector((state) => state.auth.user);
     function handleLogout() {
         logout();
         dispatch(logoutSuccess());
         navigate("/");
     }
-
     if (!user) {
         return (
-            <div className="d-flex gap-2">
-                <Link to="/login" className="btn btn-outline-primary btn-sm">
-                    Đăng nhập
-                </Link>
-                <Link to="/register" className="btn btn-primary btn-sm">
-                    Đăng ký
-                </Link>
-            </div>
+            <Link to="/login" className="site-action">
+                <i className="bi bi-person"></i>
+                <span>Đăng nhập</span>
+            </Link>
         );
     }
-
-    const firstName = user.fullName.trim().split(" ").pop();
-
+    const firstName = user.fullName.trim().split(/\s+/).pop();
     return (
-        <div className="dropdown">
+        <div className="dropdown user-menu">
             <button
                 type="button"
-                className="btn btn-outline-primary btn-sm dropdown-toggle"
+                className="site-action"
                 data-bs-toggle="dropdown"
+                data-bs-popper-config='{"strategy":"fixed"}'
                 aria-expanded="false"
+                aria-label={"Tài khoản của " + user.fullName}
             >
-                <i className="bi bi-person-circle me-1"></i>
-                Xin chào, {firstName}
+                <span className="user-menu-avatar">{getInitial(user.fullName)}</span>
+                <span className="user-menu-name">{firstName}</span>
             </button>
             <ul className="dropdown-menu dropdown-menu-end">
                 <li>
-          <span className="dropdown-item-text small text-muted">
-            {user.email}
+          <span className="dropdown-item-text">
+            <strong className="d-block">{user.fullName}</strong>
+            <span className="small text-muted">{user.email}</span>
           </span>
                 </li>
                 <li>
                     <hr className="dropdown-divider" />
+                </li>
+                <li>
+                    <Link to="/profile" className="dropdown-item">
+                        <i className="bi bi-person-lines-fill me-2"></i>
+                        Hồ sơ cá nhân
+                    </Link>
                 </li>
                 <li>
                     <button type="button" className="dropdown-item" onClick={handleLogout}>
