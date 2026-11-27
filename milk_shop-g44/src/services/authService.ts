@@ -1,4 +1,4 @@
-import type { PasswordReset, PublicUser, RegisterInput, User } from "../types";
+import type { PasswordReset, PublicUser, RegisterInput, UpdateProfileInput, User } from "../types";
 const API_URL = "http://localhost:3001";
 const SESSION_KEY = "milkshop_session";
 const RESET_TTL_MS = 10 * 60 * 1000;
@@ -53,7 +53,7 @@ export async function register(input: RegisterInput): Promise<PublicUser> {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            id: createUserId(), // id dạng chuỗi riêng, không trùng userId của các đánh giá có sẵn
+            id: createUserId(),
             fullName: input.fullName.trim(),
             email: email,
             phone: input.phone.replace(/\s/g, ""),
@@ -93,7 +93,7 @@ export async function requestPasswordReset(emailInput: string): Promise<string> 
         throw new Error("Email này chưa được đăng ký");
     }
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    await deleteResets(await findResets(email)); // mỗi email chỉ giữ 1 mã mới nhất
+    await deleteResets(await findResets(email));
     const response = await request("/passwordResets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,4 +128,36 @@ export async function resetPassword(emailInput: string, code: string, newPasswor
         throw new Error("Không thể cập nhật mật khẩu, hãy kiểm tra JSON Server (npm run api)");
     }
     await deleteResets(records);
+}
+
+async function patchUser(id: string, data: Partial<User>): Promise<User> {
+    const response = await request("/users/" + id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        throw new Error("Không thể lưu thay đổi, hãy kiểm tra JSON Server (npm run api)");
+    }
+    return await response.json();
+}
+export async function updateProfile(userId: string, input: UpdateProfileInput): Promise<PublicUser> {
+    const updated = await patchUser(userId, {
+        fullName: input.fullName.trim(),
+        phone: input.phone.replace(/\s/g, ""),
+    });
+    const publicUser = toPublicUser(updated);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(publicUser));
+    return publicUser;
+}
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const response = await request("/users/" + userId);
+    if (!response.ok) {
+        throw new Error("Không tìm thấy tài khoản, hãy đăng nhập lại");
+    }
+    const user: User = await response.json();
+    if (user.password !== currentPassword) {
+        throw new Error("Mật khẩu hiện tại không đúng");
+    }
+    await patchUser(userId, { password: newPassword });
 }
