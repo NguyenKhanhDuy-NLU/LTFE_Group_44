@@ -14,7 +14,7 @@ export default function Cart() {
     const error = useAppSelector((state) => state.category.error);
     const user = useAppSelector((state) => state.auth.user);
 
-    // Giỏ hàng chỉ lưu productId + số lượng, nên cần danh sách sản phẩm để lấy tên, giá, ảnh
+
     useEffect(() => {
         if (products.length === 0) {
             dispatch(fetchCategoryData());

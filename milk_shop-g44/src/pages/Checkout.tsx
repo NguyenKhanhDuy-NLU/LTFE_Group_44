@@ -54,7 +54,6 @@ export default function Checkout() {
     const [errors, setErrors] = useState<CheckoutErrors>({});
     const [submitting, setSubmitting] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
-    // Sau khi đặt hàng giỏ sẽ bị xóa, cờ này tránh bị đẩy ngược về /cart
     const placedRef = useRef(false);
 
     useEffect(() => {

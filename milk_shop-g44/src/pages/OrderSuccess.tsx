@@ -13,7 +13,7 @@ export default function OrderSuccess() {
     if (!user) {
         return <Navigate to="/login" state={{ from: "/orders" }} replace />;
     }
-    // Vào thẳng trang này mà chưa đặt đơn nào thì chuyển sang lịch sử
+
     if (!state.orderId) {
         return <Navigate to="/orders" replace />;
     }
