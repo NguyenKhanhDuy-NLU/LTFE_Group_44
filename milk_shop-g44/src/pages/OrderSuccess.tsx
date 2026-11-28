@@ -1,19 +1,19 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
-import { getSession } from "../services/authService";
+import { useAppSelector } from "../redux/hooks";
 
-interface LocationState {
+interface OrderSuccessState {
     orderId?: string;
 }
 
-function OrderSuccess() {
+export default function OrderSuccess() {
     const location = useLocation();
-    const user = getSession();
-    const state = (location.state ?? {}) as LocationState;
+    const user = useAppSelector((state) => state.auth.user);
+    const state = (location.state ?? {}) as OrderSuccessState;
 
     if (!user) {
         return <Navigate to="/login" state={{ from: "/orders" }} replace />;
     }
-
+    // Vào thẳng trang này mà chưa đặt đơn nào thì chuyển sang lịch sử
     if (!state.orderId) {
         return <Navigate to="/orders" replace />;
     }
@@ -25,17 +25,10 @@ function OrderSuccess() {
             <p className="text-muted">
                 Cảm ơn bạn đã mua hàng. Mã đơn hàng của bạn là <strong>{state.orderId}</strong>.
             </p>
-
             <div className="d-flex gap-2 justify-content-center mt-4">
-                <Link to="/orders" className="btn btn-outline-primary">
-                    Xem lịch sử đơn hàng
-                </Link>
-                <Link to="/" className="btn btn-primary">
-                    Tiếp tục mua sắm
-                </Link>
+                <Link to="/orders" className="btn btn-outline-primary">Xem lịch sử đơn hàng</Link>
+                <Link to="/" className="btn btn-primary">Tiếp tục mua sắm</Link>
             </div>
         </div>
     );
 }
-
-export default OrderSuccess;
